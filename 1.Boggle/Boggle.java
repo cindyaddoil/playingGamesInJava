@@ -34,6 +34,46 @@ abstract class WithDictionary {
 
 class GeneratePossibleWordsSolver extends WithDictionary implements BoggleSolver {
     public List<String> solve(Board board) {
+        Set<String> words = new HashSet<String>(readDictionary());
+        Set<String> foundWords = new HashSet<String>();
+
+        for (Node startingNode : board.getNodes()) {
+            Set<Position> visited = new HashSet<Position>();
+            visited.add(startingNode.getPosition());
+            findAll("" + startingNode.getValue(), startingNode, board, words, foundWords, visited);
+        }
+
+        return new ArrayList<String>(foundWords);
+    }
+
+    private void findAll(String currentWord, Node currentNode, Board board, Set<String> words, Set<String> foundWords, Set<Position> visited) {
+        if (currentWord.length() > 20) return;
+
+        if (words.contains(currentWord)) {
+            foundWords.add(currentWord);
+        }
+
+        List<Node> neighbours = new ArrayList<Node>();
+
+        for (Position neighbour : currentNode.getNeighbours()) {
+            neighbours.add(positionToNode(neighbour, board));
+        }
+
+        for (Node neighbour : neighbours) {
+            if (visited.contains(neighbour.getPosition())) continue;
+            visited.add(neighbour.getPosition());
+            findAll(currentWord + neighbour.getValue(), neighbour, board, words, foundWords, visited);
+            visited.remove(neighbour.getPosition());
+        }
+    }
+
+    private Node positionToNode(Position position, Board board) {
+        for (Node node : board.getNodes()) {
+            if (position.equals(node.getPosition())) return node;
+        }
+
+        assert (false); // should never happen
+
         return null;
     }
 }
@@ -193,7 +233,8 @@ class Boggle {
 
     public Boggle(String input) {
         board = buildBoard(input);
-        solver = new FindWordsFromDictionarySolver();
+        solver = new GeneratePossibleWordsSolver();
+        //solver = new FindWordsFromDictionarySolver();
     }
 
     private Board buildBoard(String input) {
@@ -243,7 +284,10 @@ class Boggle {
     }
 
     public void solve() {
-        for (String foundWord : solver.solve(board)) {
+        List<String> foundWords = solver.solve(board);
+        Collections.sort(foundWords);
+
+        for (String foundWord : foundWords) {
             if (foundWord.length() < 3) continue;
             System.out.print(foundWord + " ");
         }
