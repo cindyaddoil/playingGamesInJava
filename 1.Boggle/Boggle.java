@@ -7,6 +7,91 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
 
+class Trie {
+    private TrieNode root;
+
+    public Trie() {
+        root = new TrieNode();
+    }
+
+    public void addWord(String word) {
+        root.addWord(word.toLowerCase());
+    }
+
+    public List<String> getWords(String prefix) {
+        TrieNode lastNode = root;
+
+        for (int i = 0, sz = prefix.length(); i < sz; i++) {
+            lastNode = lastNode.getNode(prefix.charAt(i));
+
+            if (lastNode == null) return new ArrayList<String>();
+        }
+
+        return lastNode.getWords();
+    }
+}
+
+class TrieNode {
+    private TrieNode parent;
+    private TrieNode[] children;
+    private boolean isLeaf;
+    private boolean isWord;
+    private char character;
+
+    public TrieNode() {
+        children = new TrieNode[26];
+        isLeaf = true;
+        isWord = false;
+    }
+
+    public TrieNode(char character) {
+        this();
+        this.character = character;
+    }
+
+    protected void addWord(String word) {
+        isLeaf = false;
+        int charPos = word.charAt(0) - 'a';
+
+        if (children[charPos] == null) {
+            children[charPos] = new TrieNode(word.charAt(0));
+            children[charPos].parent = this;
+        }
+
+        if (word.length() > 1) {
+            children[charPos].addWord(word.substring(1));
+        } else {
+            children[charPos].isWord = true;
+        }
+    }
+
+    protected TrieNode getNode(char c) {
+        return children[c - 'a'];
+    }
+
+    protected List<String> getWords() {
+        List<String> words = new ArrayList<String>();
+
+        if (isWord) {
+            words.add(toString());
+        }
+
+        if (!isLeaf) {
+            for (int i = 0; i < children.length; i++) {
+                if (children[i] == null) continue;
+                words.addAll(children[i].getWords());
+            }
+        }
+
+        return words;
+    }
+
+    public String toString() {
+        if (parent == null) return "";
+        else return parent.toString() + character;
+    }
+}
+
 interface BoggleSolver {
     List<String> solve(Board board);
 }
