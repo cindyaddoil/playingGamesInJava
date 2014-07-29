@@ -11,13 +11,34 @@ interface BoggleSolver {
     List<String> solve(Board board);
 }
 
-class GeneratePossibleWordsSolver implements BoggleSolver {
+abstract class WithDictionary {
+    protected List<String> readDictionary() {
+        String word;
+        List<String> words = new ArrayList<String>();
+
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new FileReader("dict.txt"));
+
+            while ((word = bufferedReader.readLine()) != null) {
+                words.add(word);
+            }
+
+            bufferedReader.close();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return words;
+    }
+}
+
+class GeneratePossibleWordsSolver extends WithDictionary implements BoggleSolver {
     public List<String> solve(Board board) {
         return null;
     }
 }
 
-class FindWordsFromDictionarySolver implements BoggleSolver {
+class FindWordsFromDictionarySolver extends WithDictionary implements BoggleSolver {
     public List<String> solve(Board board) {
         List<String> words = readDictionary();
         List<String> foundWords = new ArrayList<String>();
@@ -59,7 +80,7 @@ class FindWordsFromDictionarySolver implements BoggleSolver {
         return startingNodes;
     }
 
-    public boolean searchForWord(int index, String word, Board board, Node currentNode, Set<Position> visited) {
+    private boolean searchForWord(int index, String word, Board board, Node currentNode, Set<Position> visited) {
         if (index == word.length()) return true;
 
         List<Node> neighbours = new ArrayList<Node>();
@@ -96,24 +117,6 @@ class FindWordsFromDictionarySolver implements BoggleSolver {
         return null;
     }
 
-    private List<String> readDictionary() {
-        String word;
-        List<String> words = new ArrayList<String>();
-
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new FileReader("dict.txt"));
-
-            while ((word = bufferedReader.readLine()) != null) {
-                words.add(word);
-            }
-
-            bufferedReader.close();
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-
-        return words;
-    }
 }
 
 class Position {
