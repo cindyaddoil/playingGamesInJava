@@ -9245,10 +9245,6 @@ chutes
 chutney
 chutzpa
 chutzpah
-château
-châteaux
-châtelaine
-châtelaines
 cicada
 cicadae
 cicadas
@@ -12818,8 +12814,6 @@ crowns
 crows
 crozier
 croziers
-croûton
-croûtons
 crucial
 crucially
 crucible
@@ -22691,8 +22685,6 @@ fuzzily
 fuzziness
 fuzzing
 fuzzy
-fête
-fêtes
 g
 gab
 gabardine
@@ -29714,8 +29706,6 @@ jailing
 jailor
 jailors
 jails
-jalapeño
-jalapeños
 jalopies
 jalopy
 jalousie
@@ -30439,8 +30429,6 @@ kindergarten
 kindergartener
 kindergarteners
 kindergartens
-kindergärtner
-kindergärtners
 kindest
 kindhearted
 kindle
@@ -51198,8 +51186,6 @@ smuts
 smuttier
 smuttiest
 smutty
-smörgåsbord
-smörgåsbords
 snack
 snacked
 snacking
@@ -51835,8 +51821,6 @@ soupiest
 souping
 soups
 soupy
-soupçon
-soupçons
 sour
 source
 sourced
@@ -60475,8 +60459,6 @@ victualing
 victualled
 victualling
 victuals
-vicuña
-vicuñas
 video
 videocassette
 videocassettes
