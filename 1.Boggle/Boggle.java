@@ -10,9 +10,9 @@ class Boggle {
 
     public Boggle(String input) {
         board = buildBoard(input);
-        solver = new GeneratePossibleWordsSolver();
+        //solver = new GeneratePossibleWordsSolver();
         solver = new GeneratePossibleWordsWithPruningSolver();
-        solver = new FindWordsFromDictionarySolver();
+        //solver = new FindWordsFromDictionarySolver();
     }
 
     private Board buildBoard(String input) {
