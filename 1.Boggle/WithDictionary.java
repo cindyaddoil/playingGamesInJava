@@ -15,10 +15,10 @@ public abstract class WithDictionary {
             while ((word = bufferedReader.readLine()) != null) {
                 words.add(word);
             }
+
+            bufferedReader.close();
         } catch (IOException e) {
             System.out.println(e.getMessage());
-        } finally {
-            bufferedReader.close();
         }
 
         return words;
