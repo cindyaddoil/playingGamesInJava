@@ -6084,8 +6084,6 @@ bourgeoisie
 bout
 boutique
 boutiques
-boutonnière
-boutonnières
 bouts
 bovine
 bovines
@@ -9630,8 +9628,6 @@ clicking
 clicks
 client
 clients
-clientèle
-clientèles
 cliff
 cliffhanger
 cliffhangers
@@ -11055,8 +11051,6 @@ confrontations
 confronted
 confronting
 confronts
-confrère
-confrères
 confuse
 confused
 confusedly
@@ -12009,8 +12003,6 @@ cortexes
 cortical
 cortices
 cortisone
-cortège
-cortèges
 coruscate
 coruscated
 coruscates
@@ -12954,8 +12946,6 @@ crystallizing
 crystallographic
 crystallography
 crystals
-crèche
-crèches
 cs
 cub
 cubbyhole
@@ -14675,8 +14665,6 @@ derrick
 derricks
 derringer
 derringers
-derrière
-derrières
 dervish
 dervishes
 desalinate
@@ -29756,8 +29744,6 @@ japed
 japes
 japing
 jar
-jardinière
-jardinières
 jargon
 jarred
 jarring
@@ -33106,7 +33092,6 @@ manuring
 manuscript
 manuscripts
 many
-manège
 map
 maple
 maples
