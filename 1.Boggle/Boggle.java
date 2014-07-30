@@ -8,26 +8,34 @@ import java.util.HashSet;
 import java.util.Collections;
 
 class Trie {
-    private TrieNode root;
-
-    public Trie() {
-        root = new TrieNode();
-    }
+    private TrieNode root = new TrieNode();
 
     public void addWord(String word) {
         root.addWord(word.toLowerCase());
     }
 
-    public List<String> getWords(String prefix) {
+    public boolean hasPrefix(String word) {
+        TrieNode node = descend(word);
+
+        return node == null ? false : true;
+    }
+
+    public boolean isWord(String word) {
+        TrieNode node = descend(word);
+
+        return node == null ? false : node.isWord();
+    }
+
+    private TrieNode descend(String word) {
         TrieNode lastNode = root;
 
-        for (int i = 0, sz = prefix.length(); i < sz; i++) {
-            lastNode = lastNode.getNode(prefix.charAt(i));
+        for (int i = 0, sz = word.length(); i < sz; i++) {
+            lastNode = lastNode.getNode(word.charAt(i));
 
-            if (lastNode == null) return new ArrayList<String>();
+            if (lastNode == null) break;
         }
 
-        return lastNode.getWords();
+        return lastNode;
     }
 }
 
@@ -38,19 +46,24 @@ class TrieNode {
     private boolean isWord;
     private char character;
 
-    public TrieNode() {
+    protected TrieNode() {
         children = new TrieNode[26];
         isLeaf = true;
         isWord = false;
     }
 
-    public TrieNode(char character) {
+    protected TrieNode(char character) {
         this();
         this.character = character;
     }
 
     protected void addWord(String word) {
         isLeaf = false;
+
+        if (!(word.charAt(0) >= 'a' && word.charAt(0) <= 'z')) {
+            System.out.println(word);
+        }
+
         int charPos = word.charAt(0) - 'a';
 
         if (children[charPos] == null) {
@@ -69,26 +82,8 @@ class TrieNode {
         return children[c - 'a'];
     }
 
-    protected List<String> getWords() {
-        List<String> words = new ArrayList<String>();
-
-        if (isWord) {
-            words.add(toString());
-        }
-
-        if (!isLeaf) {
-            for (int i = 0; i < children.length; i++) {
-                if (children[i] == null) continue;
-                words.addAll(children[i].getWords());
-            }
-        }
-
-        return words;
-    }
-
-    public String toString() {
-        if (parent == null) return "";
-        else return parent.toString() + character;
+    protected boolean isWord() {
+        return isWord;
     }
 }
 
@@ -132,7 +127,7 @@ class GeneratePossibleWordsSolver extends WithDictionary implements BoggleSolver
     }
 
     private void findAll(String currentWord, Node currentNode, Board board, Set<String> words, Set<String> foundWords, Set<Position> visited) {
-        if (currentWord.length() > 20) return;
+        if (currentWord.length() > 20) return; // TODO: the limit should actually be the length of the longest word in the dictionary
 
         if (words.contains(currentWord)) {
             foundWords.add(currentWord);
@@ -148,6 +143,56 @@ class GeneratePossibleWordsSolver extends WithDictionary implements BoggleSolver
             if (visited.contains(neighbour.getPosition())) continue;
             visited.add(neighbour.getPosition());
             findAll(currentWord + neighbour.getValue(), neighbour, board, words, foundWords, visited);
+            visited.remove(neighbour.getPosition());
+        }
+    }
+
+    private Node positionToNode(Position position, Board board) {
+        for (Node node : board.getNodes()) {
+            if (position.equals(node.getPosition())) return node;
+        }
+
+        assert (false); // should never happen
+
+        return null;
+    }
+}
+
+class GeneratePossibleWordsWithPruningSolver extends WithDictionary implements BoggleSolver {
+    public List<String> solve(Board board) {
+        Trie trie = new Trie();
+        Set<String> foundWords = new HashSet<String>();
+
+        for (String word : readDictionary()) {
+            trie.addWord(word);
+        }
+
+        for (Node startingNode : board.getNodes()) {
+            Set<Position> visited = new HashSet<Position>();
+            visited.add(startingNode.getPosition());
+            findAll("" + startingNode.getValue(), startingNode, board, trie, foundWords, visited);
+        }
+
+        return new ArrayList<String>(foundWords);
+    }
+
+    private void findAll(String currentWord, Node currentNode, Board board, Trie trie, Set<String> foundWords, Set<Position> visited) {
+        if (!trie.hasPrefix(currentWord)) return;
+
+        if (trie.isWord(currentWord)) {
+            foundWords.add(currentWord);
+        }
+
+        List<Node> neighbours = new ArrayList<Node>();
+
+        for (Position neighbour : currentNode.getNeighbours()) {
+            neighbours.add(positionToNode(neighbour, board));
+        }
+
+        for (Node neighbour : neighbours) {
+            if (visited.contains(neighbour.getPosition())) continue;
+            visited.add(neighbour.getPosition());
+            findAll(currentWord + neighbour.getValue(), neighbour, board, trie, foundWords, visited);
             visited.remove(neighbour.getPosition());
         }
     }
@@ -318,7 +363,8 @@ class Boggle {
 
     public Boggle(String input) {
         board = buildBoard(input);
-        solver = new GeneratePossibleWordsSolver();
+        //solver = new GeneratePossibleWordsSolver();
+        solver = new GeneratePossibleWordsWithPruningSolver();
         //solver = new FindWordsFromDictionarySolver();
     }
 
