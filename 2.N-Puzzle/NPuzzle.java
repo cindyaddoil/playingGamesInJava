@@ -1,6 +1,7 @@
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.Arrays;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -9,37 +10,49 @@ interface NPuzzleSolver {
     public void solve(Board board);
 }
 
-abstract class NPuzzleIsSolvable {
+abstract class SlidingPuzzleSolver implements NPuzzleSolver {
     /*
      * NPuzzle is solvable when
      * >>> zeroRow + numberOfInversions is even <<<
      * where zeroRow is the row number of empty tile (row index starts from 1)
-     * where numberOfInversions is the amount of elements Ai and Aj such that Ai > Aj (Ai /= 0, Aj /= 0)
+     * where numberOfInversions is the amount of elements Ai and Aj such that i < j and Ai > Aj (Ai /= 0, Aj /= 0)
      */
     protected boolean isSolvable(Board board) {
-        // TODO
-        return false;
+        int zeroRow = 1 + Arrays.asList(board.getValues()).indexOf(0) + board.getDimension();
+        int numberOfInversions = 0;
+
+        int[] values = board.getValues();
+
+        for (int i = 0, sz = values.length; i < sz; i++) {
+            for (int j = 0; j < sz; j++) {
+                if (values[i] == 0 || values[j] == 0) continue;
+
+                if (i < j && values[i] > values[j]) numberOfInversions++;
+            }
+        }
+
+        return (zeroRow + numberOfInversions) % 2 == 0;
     }
 }
 
-class DFSSolver extends NPuzzleIsSolvable implements NPuzzleSolver {
+class DFSSolver extends SlidingPuzzleSolver {
     final static int MAX_DEPTH = 50;
 
     public void solve(Board board) {
     }
 }
 
-class BFSSolver extends NPuzzleIsSolvable implements NPuzzleSolver {
+class BFSSolver extends SlidingPuzzleSolver {
     public void solve(Board board) {
     }
 }
 
-class AStarSolver extends NPuzzleIsSolvable implements NPuzzleSolver {
+class AStarSolver extends SlidingPuzzleSolver {
     public void solve(Board board) {
     }
 }
 
-class IDAStarSolver extends NPuzzleIsSolvable implements NPuzzleSolver {
+class IDAStarSolver extends SlidingPuzzleSolver {
     public void solve(Board board) {
     }
 }
@@ -55,6 +68,10 @@ class Board {
 
     public int getDimension() {
         return dimension;
+    }
+
+    public int[] getValues() {
+        return values;
     }
 }
 
