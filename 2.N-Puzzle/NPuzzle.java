@@ -11,6 +11,14 @@ interface NPuzzleSolver {
 }
 
 abstract class SlidingPuzzleSolver implements NPuzzleSolver {
+    public void solve(Board board) {
+        if (!isSolvable(board)) return;
+
+        solvePuzzle(board);
+    }
+
+    abstract void solvePuzzle(Board board);
+
     /*
      * NPuzzle is solvable when
      * >>> zeroRow + numberOfInversions is even <<<
@@ -38,22 +46,38 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
 class DFSSolver extends SlidingPuzzleSolver {
     final static int MAX_DEPTH = 50;
 
-    public void solve(Board board) {
+    public void solvePuzzle(Board board) {
     }
 }
 
 class BFSSolver extends SlidingPuzzleSolver {
-    public void solve(Board board) {
+    public void solvePuzzle(Board board) {
     }
 }
 
 class AStarSolver extends SlidingPuzzleSolver {
-    public void solve(Board board) {
+    public void solvePuzzle(Board board) {
     }
 }
 
 class IDAStarSolver extends SlidingPuzzleSolver {
-    public void solve(Board board) {
+    public void solvePuzzle(Board board) {
+    }
+}
+
+class BoardState {
+    private final Board board;
+    private final int emptyTile;
+    private final int distance;
+    private final int moves;
+    private final BoardState previousState;
+
+    public BoardState(Board board, int emptyTile, int distance, int moves, BoardState previousState) {
+        this.board = board;
+        this.emptyTile = emptyTile;
+        this.distance = distance;
+        this.moves = moves;
+        this.previousState = previousState;
     }
 }
 
