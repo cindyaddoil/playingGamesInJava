@@ -2,6 +2,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Arrays;
+import java.util.Queue;
+import java.util.LinkedList;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -26,7 +28,7 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
      * where numberOfInversions is the amount of elements Ai and Aj such that i < j and Ai > Aj (Ai /= 0, Aj /= 0)
      */
     protected boolean isSolvable(Board board) {
-        int zeroRow = 1 + Arrays.asList(board.getValues()).indexOf(0) + board.getDimension();
+        int zeroRow = 1 + zeroPosition(board);
         int numberOfInversions = 0;
 
         int[] values = board.getValues();
@@ -41,6 +43,20 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
 
         return (zeroRow + numberOfInversions) % 2 == 0;
     }
+
+    protected int zeroPosition(Board board) {
+        return Arrays.asList(board.getValues()).indexOf(0) / board.getDimension();
+    }
+
+    protected BoardState initBoardState(Board board) {
+        return new BoardState(
+            board,
+            zeroPosition(board),
+            0, // TODO: calculate manhattan distance
+            0,
+            null
+        );
+    }
 }
 
 class DFSSolver extends SlidingPuzzleSolver {
@@ -51,7 +67,16 @@ class DFSSolver extends SlidingPuzzleSolver {
 }
 
 class BFSSolver extends SlidingPuzzleSolver {
+    private Queue<BoardState> queue;
+
     public void solvePuzzle(Board board) {
+        BoardState currentState = initBoardState(board);
+        queue = new LinkedList<BoardState>();
+        queue.add(currentState);
+
+        while (!queue.isEmpty()) {
+            currentState = queue.remove();
+        }
     }
 }
 
