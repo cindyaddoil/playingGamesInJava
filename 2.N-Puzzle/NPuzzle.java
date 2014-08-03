@@ -106,6 +106,13 @@ class BoardState {
     }
 }
 
+enum MoveDirection {
+    North,
+    East,
+    South,
+    West
+}
+
 class Board {
     private final int dimension;
     private final int[] values;
