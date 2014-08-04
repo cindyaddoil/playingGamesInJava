@@ -196,9 +196,36 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
 }
 
 class DFSSolver extends SlidingPuzzleSolver {
-    final static int MAX_DEPTH = 50;
+    private Set<List<Integer>> visited;
 
     public BoardState solvePuzzle(Board board) {
+        visited = new HashSet<List<Integer>>();
+        BoardState currentState = initBoardState(board);
+
+        return findSolution(currentState);
+    }
+    
+    private BoardState findSolution(BoardState currentState) {
+        if (isSolved(currentState)) {
+            return currentState;
+        }
+
+        BoardState finalState = null;
+
+        visited.add(currentState.getBoard().getValues());
+
+        for (BoardState nextState : generatePossibleMoves(currentState)) {
+            if (nextState == null || visited.contains(nextState.getBoard().getValues())) continue;
+
+            finalState = findSolution(nextState);
+
+            if (finalState != null) {
+                return finalState;
+            }
+        }
+
+        visited.remove(currentState.getBoard().getValues());
+
         return null;
     }
 }
@@ -403,10 +430,10 @@ class NPuzzle {
 
     public NPuzzle(String fileName) {
         board = buildBoard(fileName);
-        //solver = new DFSSolver();
+        solver = new DFSSolver();
         //solver = new BFSSolver();
         //solver = new AStarSolver();
-        solver = new IDAStarSolver();
+        //solver = new IDAStarSolver();
     }
 
     private Board buildBoard(String fileName) {
