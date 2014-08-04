@@ -4,22 +4,48 @@ import java.util.Scanner;
 import java.util.Arrays;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.Set;
+import java.util.HashSet;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
 interface NPuzzleSolver {
-    public void solve(Board board);
+    public List<Board> solve(Board board) throws PuzzleBoardIsNotSolvableException;
+}
+
+class PuzzleBoardIsNotSolvableException extends Exception {
+    public PuzzleBoardIsNotSolvableException() {}
+
+    public PuzzleBoardIsNotSolvableException(String message) {
+        super(message);
+    }
 }
 
 abstract class SlidingPuzzleSolver implements NPuzzleSolver {
-    public void solve(Board board) {
-        if (!isSolvable(board)) return;
+    public List<Board> solve(Board board) throws PuzzleBoardIsNotSolvableException {
+        if (!isSolvable(board)) throw new PuzzleBoardIsNotSolvableException();
 
-        solvePuzzle(board);
+        BoardState finalState = solvePuzzle(board);
+
+        return finalState == null ? null : buildSolutionPath(finalState);
     }
 
-    abstract void solvePuzzle(Board board);
+    private List<Board> buildSolutionPath(BoardState currentState) {
+        List<Board> result;
+
+        if (currentState.getPreviousState() == null) {
+            result = new ArrayList<Board>();
+        } else {
+            result = buildSolutionPath(currentState.getPreviousState());
+        }
+
+        result.add(currentState.getBoard());
+
+        return result;
+    }
+
+    abstract BoardState solvePuzzle(Board board);
 
     /*
      * NPuzzle is solvable when
@@ -28,16 +54,16 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
      * where numberOfInversions is the amount of elements Ai and Aj such that i < j and Ai > Aj (Ai /= 0, Aj /= 0)
      */
     protected boolean isSolvable(Board board) {
-        int zeroRow = 1 + zeroPosition(board);
+        int zeroRow = 1 + zeroPosition(board) / board.getDimension();
         int numberOfInversions = 0;
 
-        int[] values = board.getValues();
+        List<Integer> values = board.getValues();
 
-        for (int i = 0, sz = values.length; i < sz; i++) {
+        for (int i = 0, sz = values.size(); i < sz; i++) {
             for (int j = 0; j < sz; j++) {
-                if (values[i] == 0 || values[j] == 0) continue;
+                if (i == j || values.get(i) == 0 || values.get(j) == 0) continue;
 
-                if (i < j && values[i] > values[j]) numberOfInversions++;
+                if (i < j && values.get(i) > values.get(j)) numberOfInversions++;
             }
         }
 
@@ -45,7 +71,7 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
     }
 
     protected int zeroPosition(Board board) {
-        return Arrays.asList(board.getValues()).indexOf(0) / board.getDimension();
+        return board.getValues().indexOf(0);
     }
 
     protected BoardState initBoardState(Board board) {
@@ -57,36 +83,138 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
             null
         );
     }
+
+    protected List<BoardState> generatePossibleMoves(BoardState currentState) {
+        List<BoardState> possibleMoves = new ArrayList<BoardState>();
+
+        for (MoveDirection moveDirection : MoveDirection.values()) {
+            possibleMoves.add(makeMove(currentState, moveDirection));
+        }
+
+        return possibleMoves;
+    }
+
+    private BoardState makeMove(BoardState currentState, MoveDirection moveDirection) {
+        BoardState nextState = null;
+        int emptyTileRow = positionToRow(currentState.getBoard().getDimension(), currentState.getEmptyTile());
+        int emptyTileCol = positionToColumn(currentState.getBoard().getDimension(), currentState.getEmptyTile());
+
+        switch (moveDirection) {
+            case North:
+                if (emptyTileRow > 0) {
+                    nextState = updatePuzzleState(currentState, emptyTileRow - 1, emptyTileCol);
+                }
+                break;
+            case East:
+                if (emptyTileCol < currentState.getBoard().getDimension() - 1) {
+                    nextState = updatePuzzleState(currentState, emptyTileRow, emptyTileCol + 1);
+                }
+                break;
+            case South:
+                if (emptyTileRow < currentState.getBoard().getDimension() - 1) {
+                    nextState = updatePuzzleState(currentState, emptyTileRow + 1, emptyTileCol);
+                }
+                break;
+            case West:
+                if (emptyTileCol > 0) {
+                    nextState = updatePuzzleState(currentState, emptyTileRow, emptyTileCol - 1);
+                }
+                break;
+        }
+
+        return nextState;
+    }
+
+    private int positionToRow(int dimension, int tilePosition) {
+        return tilePosition / dimension;
+    }
+
+    private int positionToColumn(int dimension, int tilePosition) {
+        return tilePosition % dimension;
+    }
+
+    private int rowColToPosition(int dimension, int row, int col) {
+        return row * dimension + col;
+    }
+
+    private BoardState updatePuzzleState(BoardState currentState, int row, int col) {
+        List<Integer> values = new ArrayList<Integer>(currentState.getBoard().getValues());
+
+        int newEmptyTilePosition = rowColToPosition(currentState.getBoard().getDimension(), row, col);
+
+        values.set(currentState.getEmptyTile(), values.get(newEmptyTilePosition));
+        values.set(newEmptyTilePosition, 0);
+
+        return new BoardState(
+            new Board(currentState.getBoard().getDimension(), values),
+            newEmptyTilePosition,
+            0, // TODO: recalc distance
+            currentState.getMoves() + 1,
+            currentState
+        );
+    }
+
+    protected boolean isSolved(Board board) {
+        for (int i = 1; i <= board.getDimension() * board.getDimension() - 1; i++) {
+            if (board.getValues().get(i-1) != i) return false;
+        }
+
+        return true;
+    }
+
+    protected boolean isSolved(BoardState boardState) {
+        return boardState.getDistance() == 0;
+    }
 }
 
 class DFSSolver extends SlidingPuzzleSolver {
     final static int MAX_DEPTH = 50;
 
-    public void solvePuzzle(Board board) {
+    public BoardState solvePuzzle(Board board) {
+        return null;
     }
 }
 
 class BFSSolver extends SlidingPuzzleSolver {
     private Queue<BoardState> queue;
+    private Set<List<Integer>> visited;
 
-    public void solvePuzzle(Board board) {
-        BoardState currentState = initBoardState(board);
+    public BoardState solvePuzzle(Board board) {
         queue = new LinkedList<BoardState>();
+        visited = new HashSet<List<Integer>>();
+
+        BoardState currentState = initBoardState(board);
         queue.add(currentState);
+        visited.add(currentState.getBoard().getValues());
 
         while (!queue.isEmpty()) {
             currentState = queue.remove();
+
+            if (isSolved(currentState.getBoard())) {
+                return currentState;
+            }
+
+            for (BoardState nextState : generatePossibleMoves(currentState)) {
+                if (nextState == null || visited.contains(nextState.getBoard().getValues())) continue;
+
+                visited.add(nextState.getBoard().getValues());
+                queue.add(nextState);
+            }
         }
+
+        return null;
     }
 }
 
 class AStarSolver extends SlidingPuzzleSolver {
-    public void solvePuzzle(Board board) {
+    public BoardState solvePuzzle(Board board) {
+        return null;
     }
 }
 
 class IDAStarSolver extends SlidingPuzzleSolver {
-    public void solvePuzzle(Board board) {
+    public BoardState solvePuzzle(Board board) {
+        return null;
     }
 }
 
@@ -104,6 +232,26 @@ class BoardState {
         this.moves = moves;
         this.previousState = previousState;
     }
+
+    public Board getBoard() {
+        return board;
+    }
+
+    public int getEmptyTile() {
+        return emptyTile;
+    }
+
+    public int getDistance() {
+        return distance;
+    }
+
+    public int getMoves() {
+        return moves;
+    }
+
+    public BoardState getPreviousState() {
+        return previousState;
+    }
 }
 
 enum MoveDirection {
@@ -115,9 +263,9 @@ enum MoveDirection {
 
 class Board {
     private final int dimension;
-    private final int[] values;
+    private final List<Integer> values;
 
-    public Board(int dimension, int[] values) {
+    public Board(int dimension, List<Integer> values) {
         this.dimension = dimension;
         this.values = values;
     }
@@ -126,8 +274,23 @@ class Board {
         return dimension;
     }
 
-    public int[] getValues() {
+    public List<Integer> getValues() {
         return values;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        for (int row = 0; row < dimension; row++) {
+            for (int col = 0; col < dimension; col++) {
+                sb.append(values.get(row * dimension + col));
+                sb.append(" ");
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
     }
 }
 
@@ -137,8 +300,8 @@ class NPuzzle {
 
     public NPuzzle(String fileName) {
         board = buildBoard(fileName);
-        solver = new DFSSolver();
-        //solver = new BFSSolver();
+        //solver = new DFSSolver();
+        solver = new BFSSolver();
         //solver = new AStarSolver();
         //solver = new IDAStarSolver();
     }
@@ -167,20 +330,32 @@ class NPuzzle {
 
         // TODO: error handling for incorrect input file
         dimension = scanner.nextInt();
-        int[] values = new int[dimension * dimension];
+        List<Integer> values = new ArrayList<Integer>(dimension * dimension);
 
         for (int i = 0, sz = dimension * dimension; i < sz; i++) {
-            values[i] = scanner.nextInt();
+            values.add(i, scanner.nextInt());
         }
 
         return new Board(dimension, values);
     }
 
-    public void solve() {
-        solver.solve(board);
+    public void solve() throws PuzzleBoardIsNotSolvableException {
+        List<Board> solutionPath = solver.solve(board);
+
+        if (solutionPath == null) {
+            System.out.println("Unable to find solution :(");
+        } else {
+            System.out.println("Solution found :)");
+        
+            for (Board board : solutionPath) {
+                System.out.println(board);
+            }
+
+            System.out.println("Number of steps to solve: " + solutionPath.size());
+        }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws PuzzleBoardIsNotSolvableException {
         assert(args[0] != null); // TODO: requires correct input handling
         new NPuzzle(args[0]).solve();
     }
