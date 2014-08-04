@@ -1,2 +1,2 @@
-Connect4 solver in Java
+Connect4 AI in Java
 ===========================
