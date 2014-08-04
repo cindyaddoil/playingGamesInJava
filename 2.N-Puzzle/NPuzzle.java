@@ -4,8 +4,10 @@ import java.util.Scanner;
 import java.util.Arrays;
 import java.util.Queue;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Comparator;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -78,7 +80,7 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
         return new BoardState(
             board,
             zeroPosition(board),
-            0, // TODO: calculate manhattan distance
+            boardDistance(board),
             0,
             null
         );
@@ -141,14 +143,17 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
         List<Integer> values = new ArrayList<Integer>(currentState.getBoard().getValues());
 
         int newEmptyTilePosition = rowColToPosition(currentState.getBoard().getDimension(), row, col);
+        int value = values.get(newEmptyTilePosition);
 
-        values.set(currentState.getEmptyTile(), values.get(newEmptyTilePosition));
+        int newDistance = currentState.getDistance() - manhattan(value, currentState.getBoard().getDimension(), newEmptyTilePosition) + manhattan(value, currentState.getBoard().getDimension(), currentState.getEmptyTile());
+
+        values.set(currentState.getEmptyTile(), value);
         values.set(newEmptyTilePosition, 0);
 
         return new BoardState(
             new Board(currentState.getBoard().getDimension(), values),
             newEmptyTilePosition,
-            0, // TODO: recalc distance
+            newDistance,
             currentState.getMoves() + 1,
             currentState
         );
@@ -164,6 +169,29 @@ abstract class SlidingPuzzleSolver implements NPuzzleSolver {
 
     protected boolean isSolved(BoardState boardState) {
         return boardState.getDistance() == 0;
+    }
+
+    protected int boardDistance(Board board) {
+        int distance = 0;
+
+        for (int i = 0; i < board.getDimension() * board.getDimension(); i++) {
+            distance += manhattan(board.getValues().get(i), board.getDimension(), i);
+        }
+
+        return distance;
+    }
+
+    protected int manhattan(int tile, int dimension, int index) {
+        if (tile == 0) return 0;
+
+        int currentRow = positionToRow(dimension, index);
+        int currentCol = positionToColumn(dimension, index);
+        int expectedRow = positionToRow(dimension, tile - 1);
+        int expectedCol = positionToColumn(dimension, tile - 1);
+        int rowDistance = Math.abs(currentRow - expectedRow);
+        int colDistance = Math.abs(currentCol - expectedCol);
+
+        return rowDistance + colDistance;
     }
 }
 
@@ -207,8 +235,48 @@ class BFSSolver extends SlidingPuzzleSolver {
 }
 
 class AStarSolver extends SlidingPuzzleSolver {
+    private PriorityQueue<BoardState> queue;
+    private Set<List<Integer>> visited;
+
     public BoardState solvePuzzle(Board board) {
+        queue = new PriorityQueue<BoardState>(100, new BoardStateComparator());
+        visited = new HashSet<List<Integer>>();
+
+        BoardState currentState = initBoardState(board);
+        queue.add(currentState);
+        visited.add(currentState.getBoard().getValues());
+
+        while (!queue.isEmpty()) {
+            currentState = queue.remove();
+
+            if (isSolved(currentState.getBoard())) {
+                return currentState;
+            }
+
+            for (BoardState nextState : generatePossibleMoves(currentState)) {
+                if (nextState == null || visited.contains(nextState.getBoard().getValues())) continue;
+
+                visited.add(nextState.getBoard().getValues());
+                queue.add(nextState);
+            }
+        }
+
         return null;
+    }
+
+    private class BoardStateComparator implements Comparator<BoardState> {
+        @Override
+        public int compare(BoardState firstState, BoardState secondState) {
+            int result = 0;
+
+            if (firstState.getDistance() + firstState.getMoves() < secondState.getDistance() + secondState.getMoves()) {
+                result = -1;
+            } else if (firstState.getDistance() + firstState.getMoves() > secondState.getDistance() + secondState.getMoves()) {
+                result = 1;
+            }
+
+            return result;
+        }
     }
 }
 
@@ -301,8 +369,8 @@ class NPuzzle {
     public NPuzzle(String fileName) {
         board = buildBoard(fileName);
         //solver = new DFSSolver();
-        solver = new BFSSolver();
-        //solver = new AStarSolver();
+        //solver = new BFSSolver();
+        solver = new AStarSolver();
         //solver = new IDAStarSolver();
     }
 
