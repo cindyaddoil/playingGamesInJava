@@ -86,7 +86,7 @@ class RandomPlayer extends PrintablePlayer {
         List<PlayerMove> possibleMoves = game.getPossibleMoves(this);
 
         for (PlayerMove possibleMove : possibleMoves) {
-            if (game.isWinningMove(this, possibleMove)) {
+            if (game.isWinningMove(possibleMove)) {
                 return possibleMove;
             }
         }
@@ -95,9 +95,59 @@ class RandomPlayer extends PrintablePlayer {
     }
 }
 
-class MonteCarloPlayer implements Player {
+class MonteCarloPlayer extends PrintablePlayer {
+    private final Random rng;
+    private final static int NUMBER_OF_SIMULATIONS = 5000;
+
+    public MonteCarloPlayer() {
+        this('O');
+    }
+
+    public MonteCarloPlayer(char representation) {
+        super(representation);
+        rng = new Random();
+    }
+
     public PlayerMove makeMove(ConnectFourGame game) {
+        int bestNumberOfWins = 0;
+        PlayerMove bestMove = null;
+        List<PlayerMove> possibleMoves = game.getPossibleMoves(this);
+
+        for (PlayerMove possibleMove : possibleMoves) {
+            int numberOfWins = 0;
+
+            for (int i = 0; i < NUMBER_OF_SIMULATIONS; i++) {
+                Player winner = simulateGame(game, possibleMove);
+                if (winner == this) {
+                    numberOfWins++;
+                }
+            }
+
+            if (numberOfWins > bestNumberOfWins) {
+                bestNumberOfWins = numberOfWins;
+                bestMove = possibleMove;
+            }
+        }
+
+        return bestMove;
+    }
+
+    private Player simulateGame(ConnectFourGame game, PlayerMove playerMove) {
+        ConnectFourGame simulatedGame = new ConnectFourGame(game);
+        simulatedGame.makeMove(playerMove);
         return null;
+    }
+
+    private PlayerMove generateRandomMove(ConnectFourGame game) {
+        List<PlayerMove> possibleMoves = game.getPossibleMoves(this);
+
+        for (PlayerMove possibleMove : possibleMoves) {
+            if (game.isWinningMove(possibleMove)) {
+                return possibleMove;
+            }
+        }
+
+        return possibleMoves.get(rng.nextInt(possibleMoves.size()));
     }
 }
 
@@ -265,7 +315,7 @@ class ConnectFourGame {
     }
 
     public ConnectFourGame(ConnectFourGame game) {
-        this(game.getBoard());
+        this(game.board);
     }
 
     public ConnectFourGame(Board board) {
@@ -298,7 +348,7 @@ class ConnectFourGame {
         return board.isFull() || board.hasFourInARow();
     }
 
-    public boolean isWinningMove(Player player, PlayerMove playerMove) {
+    public boolean isWinningMove(PlayerMove playerMove) {
         Board boardCopy = getBoard();
         boardCopy.makeMove(playerMove);
         return boardCopy.hasFourInARow();
