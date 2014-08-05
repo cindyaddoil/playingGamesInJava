@@ -51,7 +51,7 @@ class HumanPlayer extends PrintablePlayer {
 
             try {
                 int columnIndex = Integer.parseInt(input);
-                playerMove = new PlayerMove(this, columnIndex);
+                playerMove = new PlayerMove(this, columnIndex - 1);
             } catch (NumberFormatException e) {
                 System.out.println("Invalid column! Please try again.");
                 continue;
@@ -139,7 +139,7 @@ class Board {
     }
 
     private int boardIndex(int row, int col) {
-        return row * NUMBER_OF_ROWS + col;
+        return row * NUMBER_OF_COLUMNS + col;
     }
 
     public Player at(int row, int col) {
@@ -155,6 +155,7 @@ class Board {
             if (this.at(row, playerMove.getColumnIndex()) != null) continue;
             
             set(row, playerMove.getColumnIndex(), playerMove.getPlayer());
+            break;
         }
     }
 
@@ -200,7 +201,7 @@ class Board {
 
                     for (int i = 1; i <= 3; i++) {
                         int nextRow = row + rowDiff * i;
-                        int nextCol = col + rowDiff * i;
+                        int nextCol = col + colDiff * i;
 
                         if (nextRow < 0 || nextRow >= NUMBER_OF_ROWS 
                             || nextCol < 0 || nextCol >= NUMBER_OF_COLUMNS 
@@ -226,7 +227,7 @@ class Board {
         Player player = null;
         StringBuilder sb = new StringBuilder();
 
-        for (int row = 0; row < NUMBER_OF_ROWS; row++) {
+        for (int row = NUMBER_OF_ROWS - 1; row >= 0; row--) {
             for (int col = 0; col < NUMBER_OF_COLUMNS; col++) {
                 player = this.at(row, col);
                 
@@ -289,6 +290,21 @@ class ConnectFourGame {
 class ConnectFour {
     public static void main(String[] args) {
         ConnectFourGame game = new ConnectFourGame();
+
+        int index = 0;
+        Player players[] = { new HumanPlayer(), new RandomPlayer() };
+        Player nextPlayer = players[index];
+
         System.out.println(game.getBoard());
+
+        while (!game.isFinished()) {
+            PlayerMove playerMove = nextPlayer.makeMove(game);
+            game.makeMove(playerMove);
+
+            index = (index + 1) % 2;
+            nextPlayer = players[index];
+
+            System.out.println(game.getBoard());
+        }
     }
 }
