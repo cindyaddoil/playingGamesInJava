@@ -127,6 +127,8 @@ class Board {
     public final static int NUMBER_OF_ROWS = 6;
     public final static int NUMBER_OF_COLUMNS = 7;
 
+    private final static int directions[][] = {{0, 1}, {1, 1}, {1, 0}, {1, -1}};
+
     private ArrayList<Player> board;
 
     public Board() {
@@ -167,6 +169,56 @@ class Board {
         }
 
         return nonFullColumns;
+    }
+
+    public boolean isFull() {
+        int row = NUMBER_OF_ROWS - 1;
+
+        for (int col = 0; col < NUMBER_OF_COLUMNS; col++) {
+            if (this.at(row, col) == null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean hasFourInARow() {
+        Player player = null;
+
+        for (int row = 0; row < NUMBER_OF_ROWS; row++) {
+            for (int col = 0; col < NUMBER_OF_COLUMNS; col++) {
+                player = this.at(row, col);
+
+                if (player == null) continue;
+
+                for (int[] direction : directions) {
+                    int rowDiff = direction[0];
+                    int colDiff = direction[1];
+
+                    boolean fourInARow = true;
+
+                    for (int i = 1; i <= 3; i++) {
+                        int nextRow = row + rowDiff * i;
+                        int nextCol = col + rowDiff * i;
+
+                        if (nextRow < 0 || nextRow >= NUMBER_OF_ROWS 
+                            || nextCol < 0 || nextCol >= NUMBER_OF_COLUMNS 
+                            || this.at(nextRow, nextCol) == null 
+                            || this.at(nextRow, nextCol) != player) {
+                            fourInARow = false;
+                            break;
+                        }
+                    }
+
+                    if (fourInARow) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -227,6 +279,10 @@ class ConnectFourGame {
         }
 
         return possibleMoves;
+    }
+
+    public boolean isFinished() {
+        return board.isFull() || board.hasFourInARow();
     }
 }
 
