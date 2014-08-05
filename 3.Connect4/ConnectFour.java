@@ -1,3 +1,5 @@
+import java.util.List;
+
 interface Player {
     public PlayerMove makeMove(Board board);
 }
@@ -27,9 +29,31 @@ class MinMaxAlphaBetaPlayer implements Player {
 }
 
 class PlayerMove {
+    private final Player player;
+    private final int columnIndex;
+
+    public PlayerMove(Player player, int columnIndex) {
+        this.player = player;
+        this.columnIndex = columnIndex;
+    }
+
+    public int getColumnIndex() {
+        return columnIndex;
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
 }
 
 class Board {
+    private final static int NUMBER_OF_ROWS = 6;
+    private final static int NUMBER_OF_COLUMNS = 7;
+}
+
+class ConnectFourState {
+    private Board board;
+    private List<PlayerMove> moves;
 }
 
 class ConnectFour {
