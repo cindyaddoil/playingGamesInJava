@@ -8,11 +8,29 @@ interface Player {
     public PlayerMove makeMove(ConnectFourGame game);
 }
 
-class HumanPlayer implements Player {
+abstract class PrintablePlayer implements Player {
+    protected String representation;
+
+    public PrintablePlayer(char representation) {
+        this.representation = String.valueOf(representation);
+    }
+
+    @Override
+    public String toString() {
+        return representation;
+    }
+}
+
+class HumanPlayer extends PrintablePlayer {
     private String input;
     private final BufferedReader inputStream;
 
     public HumanPlayer() {
+        this('X');
+    }
+
+    public HumanPlayer(char representation) {
+        super(representation);
         inputStream = new BufferedReader(new InputStreamReader(System.in));
     }
 
@@ -89,6 +107,40 @@ class PlayerMove {
 class Board {
     public final static int NUMBER_OF_ROWS = 6;
     public final static int NUMBER_OF_COLUMNS = 7;
+
+    private ArrayList<Player> board;
+
+    public Board() {
+        board = new ArrayList<Player>(NUMBER_OF_ROWS * NUMBER_OF_COLUMNS);
+        for (int i = 0; i < NUMBER_OF_ROWS * NUMBER_OF_COLUMNS; i++) {
+            board.add(null);
+        }
+    }
+
+    public Player at(int row, int col) {
+        return board.get(row * NUMBER_OF_ROWS + col);
+    }
+
+    @Override
+    public String toString() {
+        Player player = null;
+        StringBuilder sb = new StringBuilder();
+
+        for (int row = 0; row < NUMBER_OF_ROWS; row++) {
+            for (int col = 0; col < NUMBER_OF_COLUMNS; col++) {
+                player = this.at(row, col);
+                
+                if (player == null) {
+                    sb.append('.');
+                } else {
+                    sb.append(player);
+                }
+            }
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
 }
 
 class ConnectFourGame {
@@ -115,6 +167,7 @@ class ConnectFourGame {
 
 class ConnectFour {
     public static void main(String[] args) {
-        System.out.println("HI");
+        ConnectFourGame game = new ConnectFourGame();
+        System.out.println(game.getBoard());
     }
 }
