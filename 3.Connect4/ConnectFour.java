@@ -1,5 +1,6 @@
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Random;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -65,6 +66,24 @@ class HumanPlayer extends PrintablePlayer {
         }
 
         return playerMove;
+    }
+}
+
+class RandomPlayer extends PrintablePlayer {
+    private final Random rng;
+
+    public RandomPlayer() {
+        this('O');
+    }
+
+    public RandomPlayer(char representation) {
+        super(representation);
+        rng = new Random();
+    }
+
+    public PlayerMove makeMove(ConnectFourGame game) {
+        List<PlayerMove> possibleMoves = game.getPossibleMoves(this);
+        return possibleMoves.get(rng.nextInt(possibleMoves.size()));
     }
 }
 
@@ -137,6 +156,19 @@ class Board {
         }
     }
 
+    public List<Integer> getNonFullColumns() {
+        int row = NUMBER_OF_ROWS - 1;
+        List<Integer> nonFullColumns = new ArrayList<Integer>();
+
+        for (int col = 0; col < NUMBER_OF_COLUMNS; col++) {
+            if (this.at(row, col) == null) {
+                nonFullColumns.add(col);
+            }
+        }
+
+        return nonFullColumns;
+    }
+
     @Override
     public String toString() {
         Player player = null;
@@ -185,6 +217,16 @@ class ConnectFourGame {
 
     public void makeMove(PlayerMove playerMove) {
         board.makeMove(playerMove);
+    }
+
+    public List<PlayerMove> getPossibleMoves(Player player) {
+        List<PlayerMove> possibleMoves = new ArrayList<PlayerMove>();
+
+        for (int columnIndex : board.getNonFullColumns()) {
+            possibleMoves.add(new PlayerMove(player, columnIndex));
+        }
+
+        return possibleMoves;
     }
 }
 
