@@ -1,6 +1,7 @@
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Collections;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -83,6 +84,13 @@ class RandomPlayer extends PrintablePlayer {
 
     public PlayerMove makeMove(ConnectFourGame game) {
         List<PlayerMove> possibleMoves = game.getPossibleMoves(this);
+
+        for (PlayerMove possibleMove : possibleMoves) {
+            if (game.isWinningMove(this, possibleMove)) {
+                return possibleMove;
+            }
+        }
+
         return possibleMoves.get(rng.nextInt(possibleMoves.size()));
     }
 }
@@ -136,6 +144,11 @@ class Board {
         for (int i = 0; i < NUMBER_OF_ROWS * NUMBER_OF_COLUMNS; i++) {
             board.add(null);
         }
+    }
+
+    public Board(Board otherBoard) {
+        this();
+        Collections.copy(this.board, otherBoard.board);
     }
 
     private int boardIndex(int row, int col) {
@@ -256,12 +269,11 @@ class ConnectFourGame {
     }
 
     public ConnectFourGame(Board board) {
-        // TODO: deep copy
-        this.board = null;
+        this.board = new Board(board);
     }
 
     public Board getBoard() {
-        return board; // TODO: return deep copy
+        return new Board(board);
     }
 
     public boolean isValidMove(PlayerMove playerMove) {
@@ -284,6 +296,12 @@ class ConnectFourGame {
 
     public boolean isFinished() {
         return board.isFull() || board.hasFourInARow();
+    }
+
+    public boolean isWinningMove(Player player, PlayerMove playerMove) {
+        Board boardCopy = getBoard();
+        boardCopy.makeMove(playerMove);
+        return boardCopy.hasFourInARow();
     }
 }
 
