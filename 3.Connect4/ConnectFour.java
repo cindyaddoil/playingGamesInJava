@@ -5,7 +5,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 
 interface Player {
-    public PlayerMove makeMove(ConnectFourGame game);
+    public PlayerMove makeMove(final ConnectFourGame game);
 }
 
 abstract class PrintablePlayer implements Player {
@@ -117,8 +117,24 @@ class Board {
         }
     }
 
+    private int boardIndex(int row, int col) {
+        return row * NUMBER_OF_ROWS + col;
+    }
+
     public Player at(int row, int col) {
-        return board.get(row * NUMBER_OF_ROWS + col);
+        return board.get(boardIndex(row, col));
+    }
+
+    private void set(int row, int col, Player player) {
+        board.set(boardIndex(row, col), player);
+    }
+
+    public void makeMove(PlayerMove playerMove) {
+        for (int row = 0; row < NUMBER_OF_ROWS; row++) {
+            if (this.at(row, playerMove.getColumnIndex()) != null) continue;
+            
+            set(row, playerMove.getColumnIndex(), playerMove.getPlayer());
+        }
     }
 
     @Override
@@ -144,24 +160,31 @@ class Board {
 }
 
 class ConnectFourGame {
-    private Board board;
-    private List<PlayerMove> moves;
+    private final Board board;
 
     public ConnectFourGame() {
         board = new Board();
-        moves = new ArrayList<PlayerMove>();
     }
 
-    public ConnectFourGame(Board board, List<PlayerMove> moves) {
+    public ConnectFourGame(ConnectFourGame game) {
+        this(game.getBoard());
+    }
+
+    public ConnectFourGame(Board board) {
         // TODO: deep copy
+        this.board = null;
     }
 
     public Board getBoard() {
-        return board;
+        return board; // TODO: return deep copy
     }
 
     public boolean isValidMove(PlayerMove playerMove) {
         return true; // TODO: add actual validation
+    }
+
+    public void makeMove(PlayerMove playerMove) {
+        board.makeMove(playerMove);
     }
 }
 
