@@ -235,6 +235,12 @@ class Board {
         return nonFullColumns;
     }
 
+    public boolean isColumnFull(int columnIndex) {
+        int row = NUMBER_OF_ROWS - 1;
+
+        return this.at(row, columnIndex) != null;
+    }
+
     public boolean isFull() {
         int row = NUMBER_OF_ROWS - 1;
 
@@ -343,7 +349,9 @@ class ConnectFourGame {
     }
 
     public boolean isValidMove(PlayerMove playerMove) {
-        return true; // TODO: add actual validation
+        return playerMove.getColumnIndex() >= 0 
+            && playerMove.getColumnIndex() < Board.NUMBER_OF_COLUMNS
+            && !board.isColumnFull(playerMove.getColumnIndex());
     }
 
     public void makeMove(PlayerMove playerMove) {
