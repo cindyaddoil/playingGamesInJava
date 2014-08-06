@@ -91,13 +91,14 @@ class RandomPlayer extends PrintablePlayer {
             }
         }
 
-        return possibleMoves.get(rng.nextInt(possibleMoves.size()));
+        return possibleMoves.get(new Random().nextInt(possibleMoves.size()));
     }
 }
 
 class MonteCarloPlayer extends PrintablePlayer {
-    private final Random rng;
-    private final static int NUMBER_OF_SIMULATIONS = 5000;
+    private final RandomPlayer ourRandomPlayer;
+    private final RandomPlayer opponentRandomPlayer;
+    private final static int NUMBER_OF_SIMULATIONS = 500;
 
     public MonteCarloPlayer() {
         this('O');
@@ -105,22 +106,29 @@ class MonteCarloPlayer extends PrintablePlayer {
 
     public MonteCarloPlayer(char representation) {
         super(representation);
-        rng = new Random();
+        ourRandomPlayer = new RandomPlayer('1');
+        opponentRandomPlayer = new RandomPlayer('2');
     }
 
     public PlayerMove makeMove(ConnectFourGame game) {
         int bestNumberOfWins = 0;
         PlayerMove bestMove = null;
-        List<PlayerMove> possibleMoves = game.getPossibleMoves(this);
+        List<PlayerMove> initialBoardMoves = prepareMovesForSimulation(game.getMoves());
+
+        ConnectFourGame simulatedGame = new ConnectFourGame(initialBoardMoves);
+        List<PlayerMove> possibleMoves = simulatedGame.getPossibleMoves(ourRandomPlayer);
 
         for (PlayerMove possibleMove : possibleMoves) {
             int numberOfWins = 0;
 
             for (int i = 0; i < NUMBER_OF_SIMULATIONS; i++) {
-                Player winner = simulateGame(game, possibleMove);
-                if (winner == this) {
+                Player winner = simulateGame(simulatedGame, possibleMove);
+
+                if (winner == ourRandomPlayer) {
                     numberOfWins++;
                 }
+
+                simulatedGame = new ConnectFourGame(initialBoardMoves);
             }
 
             if (numberOfWins > bestNumberOfWins) {
@@ -129,25 +137,43 @@ class MonteCarloPlayer extends PrintablePlayer {
             }
         }
 
-        return bestMove;
+        return new PlayerMove(this, bestMove.getColumnIndex());
     }
 
-    private Player simulateGame(ConnectFourGame game, PlayerMove playerMove) {
-        ConnectFourGame simulatedGame = new ConnectFourGame(game);
-        simulatedGame.makeMove(playerMove);
-        return null;
-    }
+    private List<PlayerMove> prepareMovesForSimulation(List<PlayerMove> moves) {
+        List<PlayerMove> simulatedMoves = new ArrayList<PlayerMove>(moves.size());
 
-    private PlayerMove generateRandomMove(ConnectFourGame game) {
-        List<PlayerMove> possibleMoves = game.getPossibleMoves(this);
-
-        for (PlayerMove possibleMove : possibleMoves) {
-            if (game.isWinningMove(possibleMove)) {
-                return possibleMove;
+        for (PlayerMove playerMove : moves) {
+            if (playerMove.getPlayer() == this) {
+                simulatedMoves.add(new PlayerMove(ourRandomPlayer, playerMove.getColumnIndex()));
+            } else {
+                simulatedMoves.add(new PlayerMove(opponentRandomPlayer, playerMove.getColumnIndex()));
             }
         }
 
-        return possibleMoves.get(rng.nextInt(possibleMoves.size()));
+        return simulatedMoves;
+    }
+
+    private Player simulateGame(ConnectFourGame simulatedGame, PlayerMove initialMove) {
+        Player players[] = {ourRandomPlayer, opponentRandomPlayer};
+
+        int currentPlayer = 0;
+        simulatedGame.makeMove(initialMove);
+
+        while (!simulatedGame.isFinished()) {
+            currentPlayer = (currentPlayer + 1) % 2;
+
+            PlayerMove nextMove = players[currentPlayer].makeMove(simulatedGame);
+            simulatedGame.makeMove(nextMove);
+        }
+
+        Player winner = null;
+
+        if (simulatedGame.getBoard().hasFourInARow()) {
+            winner = players[currentPlayer];
+        }
+
+        return winner;
     }
 }
 
@@ -329,13 +355,13 @@ class ConnectFourGame {
     public ConnectFourGame(List<PlayerMove> moves) {
         this.board = boardFromMoves(moves);
         this.moves = new ArrayList<PlayerMove>(moves.size());
-        Collections.copy(this.moves, moves);
+        this.moves.addAll(moves);
     }
 
     public ConnectFourGame(Board board, List<PlayerMove> moves) {
         this.board = new Board(board);
         this.moves = new ArrayList<PlayerMove>(moves.size());
-        Collections.copy(this.moves, moves);
+        this.moves.addAll(moves);
     }
 
     public Board getBoard() {
@@ -344,7 +370,7 @@ class ConnectFourGame {
 
     public List<PlayerMove> getMoves() {
         List<PlayerMove> movesCopy = new ArrayList<PlayerMove>(moves.size());
-        Collections.copy(movesCopy, moves);
+        movesCopy.addAll(moves);
         return movesCopy;
     }
 
@@ -395,7 +421,8 @@ class ConnectFour {
         ConnectFourGame game = new ConnectFourGame();
 
         int index = 0;
-        Player players[] = { new HumanPlayer(), new RandomPlayer() };
+        //Player players[] = { new HumanPlayer(), new RandomPlayer() };
+        Player players[] = { new HumanPlayer(), new MonteCarloPlayer() };
         Player nextPlayer = players[index];
 
         System.out.println(game.getBoard());
