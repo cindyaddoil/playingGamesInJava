@@ -309,21 +309,37 @@ class Board {
 
 class ConnectFourGame {
     private final Board board;
+    private final List<PlayerMove> moves;
 
     public ConnectFourGame() {
         board = new Board();
+        moves = new ArrayList<PlayerMove>();
     }
 
     public ConnectFourGame(ConnectFourGame game) {
-        this(game.board);
+        this(game.board, game.moves);
     }
 
-    public ConnectFourGame(Board board) {
+    public ConnectFourGame(List<PlayerMove> moves) {
+        this.board = boardFromMoves(moves);
+        this.moves = new ArrayList<PlayerMove>(moves.size());
+        Collections.copy(this.moves, moves);
+    }
+
+    public ConnectFourGame(Board board, List<PlayerMove> moves) {
         this.board = new Board(board);
+        this.moves = new ArrayList<PlayerMove>(moves.size());
+        Collections.copy(this.moves, moves);
     }
 
     public Board getBoard() {
         return new Board(board);
+    }
+
+    public List<PlayerMove> getMoves() {
+        List<PlayerMove> movesCopy = new ArrayList<PlayerMove>(moves.size());
+        Collections.copy(movesCopy, moves);
+        return movesCopy;
     }
 
     public boolean isValidMove(PlayerMove playerMove) {
@@ -331,6 +347,7 @@ class ConnectFourGame {
     }
 
     public void makeMove(PlayerMove playerMove) {
+        moves.add(playerMove);
         board.makeMove(playerMove);
     }
 
@@ -352,6 +369,16 @@ class ConnectFourGame {
         Board boardCopy = getBoard();
         boardCopy.makeMove(playerMove);
         return boardCopy.hasFourInARow();
+    }
+
+    private Board boardFromMoves(List<PlayerMove> moves) {
+        Board board = new Board();
+
+        for (PlayerMove playerMove : moves) {
+            board.makeMove(playerMove);
+        }
+
+        return board;
     }
 }
 
