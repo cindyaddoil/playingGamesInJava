@@ -95,6 +95,87 @@ class RandomPlayer extends PrintablePlayer {
     }
 }
 
+class MonteCarloPlayer extends PrintablePlayer {
+    private final RandomPlayer ourRandomPlayer;
+    private final RandomPlayer opponentRandomPlayer;
+    private final static int NUMBER_OF_SIMULATIONS = 250;
+
+    public MonteCarloPlayer() {
+        this('O');
+    }
+
+    public MonteCarloPlayer(char representation) {
+        super(representation);
+        ourRandomPlayer = new RandomPlayer('1');
+        opponentRandomPlayer = new RandomPlayer('2');
+    }
+
+    public PlayerMove suggestMove(ConnectFourGame game) {
+        int bestNumberOfWins = 0;
+        PlayerMove bestMove = null;
+        List<PlayerMove> initialBoardMoves = prepareMovesForSimulation(game.getMoves());
+
+        ConnectFourGame simulatedGame = new ConnectFourGame(initialBoardMoves);
+        List<PlayerMove> possibleMoves = simulatedGame.getPossibleMoves(ourRandomPlayer);
+
+        for (PlayerMove possibleMove : possibleMoves) {
+            int numberOfWins = 0;
+
+            for (int i = 0; i < NUMBER_OF_SIMULATIONS; i++) {
+                Player winner = simulateGame(simulatedGame, possibleMove);
+
+                if (winner == ourRandomPlayer) {
+                    numberOfWins++;
+                }
+
+                simulatedGame = new ConnectFourGame(initialBoardMoves);
+            }
+
+            if (numberOfWins > bestNumberOfWins) {
+                bestNumberOfWins = numberOfWins;
+                bestMove = possibleMove;
+            }
+        }
+
+        return new PlayerMove(this, bestMove.getColumnIndex());
+    }
+
+    private Player simulateGame(ConnectFourGame simulatedGame, PlayerMove initialMove) {
+        Player[] players = {ourRandomPlayer, opponentRandomPlayer};
+
+        int currentPlayer = 0;
+        simulatedGame.makeMove(initialMove);
+
+        while (!simulatedGame.isFinished()) {
+            currentPlayer = (currentPlayer + 1) % 2;
+            PlayerMove nextMove = players[currentPlayer].suggestMove(simulatedGame);
+            simulatedGame.makeMove(nextMove);
+        }
+
+        Player winner = null;
+
+        if (simulatedGame.hasFourInARow()) {
+            winner = players[currentPlayer];
+        }
+
+        return winner;
+    }
+
+    private List<PlayerMove> prepareMovesForSimulation(List<PlayerMove> moves) {
+        List<PlayerMove> simulatedMoves = new ArrayList<PlayerMove>(moves.size());
+
+        for (PlayerMove playerMove : moves) {
+            if (playerMove.getPlayer() == this) {
+                simulatedMoves.add(new PlayerMove(ourRandomPlayer, playerMove.getColumnIndex()));
+            } else {
+                simulatedMoves.add(new PlayerMove(opponentRandomPlayer, playerMove.getColumnIndex()));
+            }
+        }
+
+        return simulatedMoves;
+    }
+}
+
 class PlayerMove {
     private final Player player;
     private final int columnIndex;
@@ -125,6 +206,17 @@ class ConnectFourGame {
     public ConnectFourGame() {
         board = new Player[NUMBER_OF_ROWS][NUMBER_OF_COLUMNS];
         moves = new ArrayList<PlayerMove>();
+    }
+
+    public ConnectFourGame(List<PlayerMove> moves) {
+        this();
+        for (PlayerMove playerMove : moves) {
+            makeMove(playerMove);
+        }
+    }
+
+    public List<PlayerMove> getMoves() {
+        return moves;
     }
 
     public boolean isFinished() {
@@ -262,8 +354,8 @@ class ConnectFourGame {
 
 class ConnectFour {
     public static void main(String[] args) {
-        Player[] players = { new HumanPlayer('O'), new RandomPlayer('X') };
-        //Player[] players = { new HumanPlayer('O'), new MonteCarloPlayer('X') };
+        //Player[] players = { new HumanPlayer('O'), new RandomPlayer('X') };
+        Player[] players = { new HumanPlayer('O'), new MonteCarloPlayer('X') };
 
         ConnectFourGame game = new ConnectFourGame();
         int index = 0;
