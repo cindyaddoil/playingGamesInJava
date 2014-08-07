@@ -178,8 +178,44 @@ class MonteCarloPlayer extends PrintablePlayer {
 }
 
 class MinMaxPlayer implements Player {
+    private final static int DEPTH_LIMIT = 5;
+
+    private class DummyPlayer implements Player {
+        public PlayerMove makeMove(ConnectFourGame game) {
+            return null;
+        }
+    }
+
+    private DummyPlayer ourDummyPlayer = new DummyPlayer();
+    private DummyPlayer opponentDummyPlayer = new DummyPlayer();
+    private Player[] dummyPlayers = {ourDummyPlayer, opponentDummyPlayer};
+
     public PlayerMove makeMove(ConnectFourGame game) {
-        return null;
+        List<PlayerMove> initialBoardMoves = prepareMovesForSimulation(game.getMoves());
+
+        ConnectFourGame simulatedGame = new ConnectFourGame(initialBoardMoves);
+        List<PlayerMove> possibleMoves = simulatedGame.getPossibleMoves(ourDummyPlayer);
+
+        int bestResult = Integer.MIN_VALUE;
+        List<PlayerMove> candidateMoves = new ArrayList<PlayerMove>();
+
+        for (PlayerMove possibleMove : possibleMoves) {
+            int result = minimax(simulatedGame, possibleMove, 0, 0);
+
+            if (result > bestResult) {
+                candidateMoves.clear();
+                bestResult = result;
+                candidateMoves.add(possibleMove);
+            } else if (result == bestResult) {
+                candidateMoves.add(possibleMove);
+            }
+        }
+
+        if (candidateMoves.size() > 1) {
+            Collections.shuffle(candidateMoves);
+        }
+
+        return new PlayerMove(this, candidateMoves.get(0).getColumnIndex());
     }
 
     /*
@@ -189,17 +225,58 @@ class MinMaxPlayer implements Player {
         if the move is a winning move
             return INFINITY
 
-        if depth = 0
+        if depth = DEPTH_LIMIT
             return HEURISTIC value of the current move
 
         moveValue = INFINITY
 
         for all possible opponent moves
-            moveValue = min (moveValue, -minimax( opponent move, depth - 1))
+            moveValue = min (moveValue, -minimax( opponent move, depth + 1))
 
         return moveValue
     }
     */
+
+    private int minimax(ConnectFourGame game, PlayerMove playerMove, int playerIndex, int depth) {
+        ConnectFourGame simulatedGame = new ConnectFourGame(game);
+
+        if (simulatedGame.isWinningMove(playerMove)) {
+            return Integer.MAX_VALUE;
+        }
+
+        if (depth == DEPTH_LIMIT) {
+            return heuristic(simulatedGame, playerMove);
+        }
+
+        simulatedGame.makeMove(playerMove);
+
+        int moveValue = Integer.MAX_VALUE;
+        int nextPlayerIndex = (playerIndex + 1) % 2;
+
+        for (PlayerMove possibleMove : simulatedGame.getPossibleMoves(dummyPlayers[nextPlayerIndex])) {
+            moveValue = Math.min(moveValue, -minimax(simulatedGame, possibleMove, nextPlayerIndex, depth + 1));
+        }
+
+        return moveValue;
+    }
+    // We have a weighted system where single checkers count for 1, two close checkers count for 4, and three close checkers count for 32
+    private int heuristic(ConnectFourGame game, PlayerMove playerMove) {
+        return 0;
+    }
+
+    private List<PlayerMove> prepareMovesForSimulation(List<PlayerMove> moves) {
+        List<PlayerMove> simulatedMoves = new ArrayList<PlayerMove>(moves.size());
+
+        for (PlayerMove playerMove : moves) {
+            if (playerMove.getPlayer() == this) {
+                simulatedMoves.add(new PlayerMove(ourDummyPlayer, playerMove.getColumnIndex()));
+            } else {
+                simulatedMoves.add(new PlayerMove(opponentDummyPlayer, playerMove.getColumnIndex()));
+            }
+        }
+
+        return simulatedMoves;
+    }
 }
 
 class MinMaxAlphaBetaPlayer implements Player {
