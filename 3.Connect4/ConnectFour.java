@@ -181,6 +181,25 @@ class MinMaxPlayer implements Player {
     public PlayerMove makeMove(ConnectFourGame game) {
         return null;
     }
+
+    /*
+    pseudocode:
+
+    minimax (move, depth) {
+        if the move is a winning move
+            return INFINITY
+
+        if depth = 0
+            return HEURISTIC value of the current move
+
+        moveValue = INFINITY
+
+        for all possible opponent moves
+            moveValue = min (moveValue, -minimax( opponent move, depth - 1))
+
+        return moveValue
+    }
+    */
 }
 
 class MinMaxAlphaBetaPlayer implements Player {
