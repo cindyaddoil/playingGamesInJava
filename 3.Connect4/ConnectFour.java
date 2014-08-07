@@ -176,6 +176,123 @@ class MonteCarloPlayer extends PrintablePlayer {
     }
 }
 
+class MinMaxPlayer extends PrintablePlayer {
+    private final static int DEPTH_LIMIT = 5;
+    private final DummyPlayer ourDummyPlayer;
+    private final DummyPlayer opponentDummyPlayer;
+    private final Player[] dummyPlayers;
+
+    private class DummyPlayer implements Player {
+        public PlayerMove suggestMove(ConnectFourGame game) {
+            return null;
+        }
+    }
+
+    public MinMaxPlayer() {
+        this('O');
+    }
+
+    public MinMaxPlayer(char representation) {
+        super(representation);
+        ourDummyPlayer = new DummyPlayer();
+        opponentDummyPlayer = new DummyPlayer();
+        dummyPlayers = new Player[] {ourDummyPlayer, opponentDummyPlayer};
+    }
+
+    public PlayerMove suggestMove(ConnectFourGame game) {
+        List<PlayerMove> initialBoardMoves = prepareMovesForSimulation(game.getMoves());
+
+        ConnectFourGame simulatedGame = new ConnectFourGame(initialBoardMoves);
+        List<PlayerMove> possibleMoves = simulatedGame.getPossibleMoves(ourDummyPlayer);
+
+        int bestResult = Integer.MIN_VALUE;
+        List<PlayerMove> candidateMoves = new ArrayList<PlayerMove>();
+
+        for (PlayerMove possibleMove : possibleMoves) {
+            int result = minimax(simulatedGame, possibleMove, 0, 0);
+
+            if (result > bestResult) {
+                candidateMoves.clear();
+                bestResult = result;
+                candidateMoves.add(possibleMove);
+            } else if (result == bestResult) {
+                candidateMoves.add(possibleMove);
+            }
+        }
+
+        if (candidateMoves.size() > 1) {
+            Collections.shuffle(candidateMoves);
+        }
+
+        return new PlayerMove(this, candidateMoves.get(0).getColumnIndex());
+    }
+
+    /*
+     Pseudocode:
+
+     minimax (move, depth) {
+         if the move is a winning move
+             return INFINITY
+
+         if depth = DEPTH_LIMIT
+             return heuristic value of the current move
+         
+         moveValue = INFINITY
+
+         for all possible opponent moves
+             moveValue = min (moveValue, -minimax(opponent move, depth + 1))
+
+         return moveValue
+     }
+
+     */
+
+    private int minimax(ConnectFourGame simulatedGame, PlayerMove playerMove, int playerIndex, int depth) {
+        if (simulatedGame.isWinningMove(playerMove)) {
+            return Integer.MAX_VALUE;
+        }
+
+        if (depth == DEPTH_LIMIT) {
+            return heuristic(simulatedGame, playerMove);
+        }
+
+        simulatedGame.makeMove(playerMove);
+
+        int moveValue = Integer.MAX_VALUE;
+        int nextPlayerIndex = (playerIndex + 1) % 2;
+
+        for (PlayerMove possibleMove : simulatedGame.getPossibleMoves(dummyPlayers[nextPlayerIndex])) {
+            moveValue = Math.min(moveValue, -minimax(simulatedGame, possibleMove, nextPlayerIndex, depth + 1));
+        }
+
+        return moveValue;
+    }
+
+    /*
+     * We look at the segments of 4 in different directions
+     * If there is a single checker we count it as 1
+     * If there are two close checkers we count it as 4
+     * If there are three close checkers we count it as 32
+     */
+    private int heuristic(ConnectFourGame game, PlayerMove playerMove) {
+        return 0; // TODO
+    }
+
+    private List<PlayerMove> prepareMovesForSimulation(List<PlayerMove> moves) {
+        List<PlayerMove> simulatedMoves = new ArrayList<PlayerMove>(moves.size());
+
+        for (PlayerMove playerMove : moves) {
+            if (playerMove.getPlayer() == this) {
+                simulatedMoves.add(new PlayerMove(ourDummyPlayer, playerMove.getColumnIndex()));
+            } else {
+                simulatedMoves.add(new PlayerMove(opponentDummyPlayer, playerMove.getColumnIndex()));
+            }
+        }
+
+        return simulatedMoves;
+    }
+}
+
 class PlayerMove {
     private final Player player;
     private final int columnIndex;
@@ -355,7 +472,8 @@ class ConnectFourGame {
 class ConnectFour {
     public static void main(String[] args) {
         //Player[] players = { new HumanPlayer('O'), new RandomPlayer('X') };
-        Player[] players = { new HumanPlayer('O'), new MonteCarloPlayer('X') };
+        //Player[] players = { new HumanPlayer('O'), new MonteCarloPlayer('X') };
+        Player[] players = { new HumanPlayer('O'), new MinMaxPlayer('X') };
 
         ConnectFourGame game = new ConnectFourGame();
         int index = 0;
