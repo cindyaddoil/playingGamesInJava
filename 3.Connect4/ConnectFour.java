@@ -1,9 +1,15 @@
 class ConnectFour {
     public static void main(String[] args) {
-        //Player[] players = { new HumanPlayer('O'), new RandomPlayer('X') };
-        //Player[] players = { new HumanPlayer('O'), new MonteCarloPlayer('X') };
-        //Player[] players = { new HumanPlayer('O'), new MinMaxPlayer('X') };
-        //Player[] players = { new HumanPlayer('O'), new MinMaxAlphaBetaPlayer('X') };
+        Player humanPlayer = new HumanPlayer('O');
+        Player randomPlayer = new RandomPlayer('X');
+        Player monteCarloPlayer = new MonteCarloPlayer('X');
+        Player minMaxPlayer = new MinMaxPlayer('X');
+        Player minMaxAlphaBetaPlayer = new MinMaxAlphaBetaPlayer('X');
+
+        //Player[] players = { humanPlayer, randomPlayer };
+        //Player[] players = { humanPlayer, monteCarloPlayer };
+        //Player[] players = { humanPlayer, minMaxPlayer };
+        //Player[] players = { humanPlayer, minMaxAlphaBetaPlayer };
         //Player[] players = { new MonteCarloPlayer('X'), new MinMaxPlayer('O') };
         Player[] players = { new MonteCarloPlayer('X'), new MinMaxAlphaBetaPlayer('O') };
 

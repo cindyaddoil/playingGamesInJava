@@ -2,9 +2,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 
-class MonteCarloPlayer extends PrintablePlayer {
-    private final RandomPlayer ourRandomPlayer;
-    private final RandomPlayer opponentRandomPlayer;
+class MonteCarloPlayer extends PrintableWithSimulationPlayer {
     private final static int NUMBER_OF_SIMULATIONS = 2000;
 
     public MonteCarloPlayer() {
@@ -12,9 +10,7 @@ class MonteCarloPlayer extends PrintablePlayer {
     }
 
     public MonteCarloPlayer(char representation) {
-        super(representation);
-        ourRandomPlayer = new RandomPlayer('1');
-        opponentRandomPlayer = new RandomPlayer('2');
+        super(representation, new RandomPlayer(), new RandomPlayer());
     }
 
     public PlayerMove suggestMove(ConnectFourGame game) {
@@ -23,7 +19,7 @@ class MonteCarloPlayer extends PrintablePlayer {
         List<PlayerMove> initialBoardMoves = prepareMovesForSimulation(game.getMoves());
 
         ConnectFourGame simulatedGame = new ConnectFourGame(initialBoardMoves);
-        List<PlayerMove> possibleMoves = simulatedGame.getPossibleMoves(ourRandomPlayer);
+        List<PlayerMove> possibleMoves = simulatedGame.getPossibleMoves(ourPlayer);
 
         for (PlayerMove possibleMove : possibleMoves) {
             int numberOfWins = 0;
@@ -31,7 +27,7 @@ class MonteCarloPlayer extends PrintablePlayer {
             for (int i = 0; i < NUMBER_OF_SIMULATIONS; i++) {
                 Player winner = simulateGame(simulatedGame, possibleMove);
 
-                if (winner == ourRandomPlayer) {
+                if (winner == ourPlayer) {
                     numberOfWins++;
                 }
 
@@ -54,7 +50,7 @@ class MonteCarloPlayer extends PrintablePlayer {
     }
 
     private Player simulateGame(ConnectFourGame simulatedGame, PlayerMove initialMove) {
-        Player[] players = {ourRandomPlayer, opponentRandomPlayer};
+        Player[] players = {ourPlayer, opponentPlayer};
 
         int currentPlayer = 0;
         simulatedGame.makeMove(initialMove);
@@ -72,19 +68,5 @@ class MonteCarloPlayer extends PrintablePlayer {
         }
 
         return winner;
-    }
-
-    private List<PlayerMove> prepareMovesForSimulation(List<PlayerMove> moves) {
-        List<PlayerMove> simulatedMoves = new ArrayList<PlayerMove>(moves.size());
-
-        for (PlayerMove playerMove : moves) {
-            if (playerMove.getPlayer() == this) {
-                simulatedMoves.add(new PlayerMove(ourRandomPlayer, playerMove.getColumnIndex()));
-            } else {
-                simulatedMoves.add(new PlayerMove(opponentRandomPlayer, playerMove.getColumnIndex()));
-            }
-        }
-
-        return simulatedMoves;
     }
 }
