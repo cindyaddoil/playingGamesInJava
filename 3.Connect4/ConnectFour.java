@@ -183,7 +183,7 @@ class MonteCarloPlayer extends PrintablePlayer {
 }
 
 class MinMaxPlayer extends PrintablePlayer {
-    private final static int DEPTH_LIMIT = 7;
+    private final static int DEPTH_LIMIT = 8;
     private final DummyPlayer ourDummyPlayer;
     private final DummyPlayer opponentDummyPlayer;
     private final Player[] dummyPlayers;
