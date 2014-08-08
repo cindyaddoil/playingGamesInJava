@@ -98,7 +98,7 @@ class RandomPlayer extends PrintablePlayer {
 class MonteCarloPlayer extends PrintablePlayer {
     private final RandomPlayer ourRandomPlayer;
     private final RandomPlayer opponentRandomPlayer;
-    private final static int NUMBER_OF_SIMULATIONS = 250;
+    private final static int NUMBER_OF_SIMULATIONS = 500;
 
     public MonteCarloPlayer() {
         this('O');
@@ -135,6 +135,12 @@ class MonteCarloPlayer extends PrintablePlayer {
                 bestNumberOfWins = numberOfWins;
                 bestMove = possibleMove;
             }
+        }
+
+        // anywhere we go will result in a loss in the end
+        if (bestMove == null) {
+            Collections.shuffle(possibleMoves);
+            bestMove = possibleMoves.get(0);
         }
 
         return new PlayerMove(this, bestMove.getColumnIndex());
@@ -177,12 +183,16 @@ class MonteCarloPlayer extends PrintablePlayer {
 }
 
 class MinMaxPlayer extends PrintablePlayer {
-    private final static int DEPTH_LIMIT = 5;
+    private final static int DEPTH_LIMIT = 7;
     private final DummyPlayer ourDummyPlayer;
     private final DummyPlayer opponentDummyPlayer;
     private final Player[] dummyPlayers;
 
-    private class DummyPlayer implements Player {
+    private class DummyPlayer extends PrintablePlayer {
+        public DummyPlayer(char representation) {
+            super(representation);
+        }
+
         public PlayerMove suggestMove(ConnectFourGame game) {
             return null;
         }
@@ -194,8 +204,8 @@ class MinMaxPlayer extends PrintablePlayer {
 
     public MinMaxPlayer(char representation) {
         super(representation);
-        ourDummyPlayer = new DummyPlayer();
-        opponentDummyPlayer = new DummyPlayer();
+        ourDummyPlayer = new DummyPlayer('1');
+        opponentDummyPlayer = new DummyPlayer('2');
         dummyPlayers = new Player[] {ourDummyPlayer, opponentDummyPlayer};
     }
 
@@ -210,6 +220,8 @@ class MinMaxPlayer extends PrintablePlayer {
 
         for (PlayerMove possibleMove : possibleMoves) {
             int result = minimax(simulatedGame, possibleMove, 0, 0);
+
+            System.out.println("move to column " + possibleMove.getColumnIndex() + " is worth " + result);
 
             if (result > bestResult) {
                 candidateMoves.clear();
@@ -265,17 +277,117 @@ class MinMaxPlayer extends PrintablePlayer {
             moveValue = Math.min(moveValue, -minimax(simulatedGame, possibleMove, nextPlayerIndex, depth + 1));
         }
 
+        simulatedGame.undoMove();
+
         return moveValue;
     }
 
-    /*
-     * We look at the segments of 4 in different directions
-     * If there is a single checker we count it as 1
-     * If there are two close checkers we count it as 4
-     * If there are three close checkers we count it as 32
-     */
     private int heuristic(ConnectFourGame game, PlayerMove playerMove) {
-        return 0; // TODO
+        int value = 0;
+        int count = 0;
+        Player[][] board = game.getBoard();
+        
+        int moveRow = game.makeMove(playerMove);
+        int moveCol = playerMove.getColumnIndex();
+
+        // row heuristic
+        for (int col = moveCol - 3; col <= moveCol; col++) {
+            if (col < 0 || col + 3 >= ConnectFourGame.NUMBER_OF_COLUMNS) continue;
+
+            boolean ok = true;
+            count = 0;
+
+            for (int i = 0; i < 4; i++) {
+                if (board[moveRow][col + i] != playerMove.getPlayer() && board[moveRow][col + i] != null) {
+                    ok = false;
+                    break;
+                }
+
+                if (board[moveRow][col + i] == playerMove.getPlayer()) {
+                    count++;
+                }
+            }
+
+            if (!ok) continue;
+
+            value += countToValue(count);
+        }
+
+        // column heuristic
+        count = 0;
+        for (int row = moveRow; row >= 0; row--) {
+            if (board[row][moveCol] != playerMove.getPlayer()) break;
+            count++;
+        }
+
+        // only if we can actually get 4 in this column
+        if (moveRow + (4 - count) < ConnectFourGame.NUMBER_OF_ROWS) {
+            value += countToValue(count);
+        }
+
+        // left diagonal heuristic
+        for (int row = moveRow - 3, col = moveCol - 3; row <= moveRow && col <= moveCol; row++, col++) {
+            if (row < 0 || row + 3 >= ConnectFourGame.NUMBER_OF_ROWS || col < 0 || col + 3 >= ConnectFourGame.NUMBER_OF_COLUMNS) continue;
+
+            boolean ok = true;
+            count = 0;
+
+            for (int i = 0; i < 4; i++) {
+                if (board[row + i][col + i] != playerMove.getPlayer() && board[row + i][col + i] != null) {
+                    ok = false;
+                    break;
+                }
+
+                if (board[row + i][col + i] == playerMove.getPlayer()) {
+                    count++;
+                }
+            }
+
+            if (!ok) continue;
+
+            value += countToValue(count);
+        }
+
+        // right diagonal heuristic
+        for (int row = moveRow + 3, col = moveCol - 3; row >= moveRow && col <= moveCol; row--, col++) {
+            if (row >= ConnectFourGame.NUMBER_OF_ROWS || row - 3 < 0 || col < 0 || col + 3 >= ConnectFourGame.NUMBER_OF_COLUMNS) continue;
+
+            boolean ok = true;
+            count = 0;
+
+            for (int i = 0; i < 4; i++) {
+                if (board[row - i][col + i] != playerMove.getPlayer() && board[row - i][col + i] != null) {
+                    ok = false;
+                    break;
+                }
+
+                if (board[row - i][col + i] == playerMove.getPlayer()) {
+                    count++;
+                }
+            }
+
+            if (!ok) continue;
+
+            value += countToValue(count);
+        }
+
+        game.undoMove();
+
+        return value;
+    }
+
+    private int countToValue(int count) {
+        int value = 0;
+
+        if (count == 1) {
+            value = 1;
+        } else if (count == 2) {
+            value = 4;
+        } else if (count == 3) {
+            value = 32;
+        }
+
+        return value;
     }
 
     private List<PlayerMove> prepareMovesForSimulation(List<PlayerMove> moves) {
@@ -332,6 +444,10 @@ class ConnectFourGame {
         }
     }
 
+    public Player[][] getBoard() {
+        return board;
+    }
+
     public List<PlayerMove> getMoves() {
         return moves;
     }
@@ -370,10 +486,11 @@ class ConnectFourGame {
         return board[NUMBER_OF_ROWS - 1][columnIndex] != null;
     }
 
-    public void makeMove(PlayerMove playerMove) {
+    public int makeMove(PlayerMove playerMove) {
+        int row;
         int col = playerMove.getColumnIndex();
 
-        for (int row = 0; row < NUMBER_OF_ROWS; row++) {
+        for (row = 0; row < NUMBER_OF_ROWS; row++) {
             if (board[row][col] != null) continue;
 
             board[row][col] = playerMove.getPlayer();
@@ -381,6 +498,8 @@ class ConnectFourGame {
         }
 
         moves.add(playerMove);
+
+        return row;
     }
 
     public void undoMove() {
@@ -473,13 +592,15 @@ class ConnectFour {
     public static void main(String[] args) {
         //Player[] players = { new HumanPlayer('O'), new RandomPlayer('X') };
         //Player[] players = { new HumanPlayer('O'), new MonteCarloPlayer('X') };
-        Player[] players = { new HumanPlayer('O'), new MinMaxPlayer('X') };
+        //Player[] players = { new HumanPlayer('O'), new MinMaxPlayer('X') };
+        Player[] players = { new MonteCarloPlayer('X'), new MinMaxPlayer('O') };
 
         ConnectFourGame game = new ConnectFourGame();
         int index = 0;
         Player nextPlayer = players[index];
 
         game.printBoard();
+        System.out.println();
 
         while (!game.isFinished()) {
             PlayerMove playerMove = nextPlayer.suggestMove(game);
@@ -489,6 +610,7 @@ class ConnectFour {
             nextPlayer = players[index];
 
             game.printBoard();
+            System.out.println();
         }
     }
 }
