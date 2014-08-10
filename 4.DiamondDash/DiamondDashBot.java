@@ -6,6 +6,12 @@ import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.awt.Toolkit;
+import java.awt.Rectangle;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 
 class DiamondDashBot extends JFrame implements KeyListener {
     private final Robot robot;
@@ -32,8 +38,23 @@ class DiamondDashBot extends JFrame implements KeyListener {
 
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            System.out.println("ENTER pressed");
+            // TODO: execute in different thread
+            searchForDiamondDashLogo();
         }
+    }
+
+    private void searchForDiamondDashLogo() {
+        Rectangle screenRectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+        BufferedImage screenshot = robot.createScreenCapture(screenRectangle);
+        try {
+            BufferedImage diamondDashLogo = ImageIO.read(new File("diamond.dash.png"));
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        // TODO: search for logo in screenshot
+
+        System.out.println("DONE");
     }
 
     public void keyReleased(KeyEvent e) {}
