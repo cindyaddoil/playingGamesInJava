@@ -38,23 +38,76 @@ class DiamondDashBot extends JFrame implements KeyListener {
 
     public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+            botState.setText("Searching for diamond dash window");
             // TODO: execute in different thread
-            searchForDiamondDashLogo();
+            Location diamondDashLogoLocation = searchForDiamondDashLogo();
+            Location playButtonLocation = new Location(diamondDashLogoLocation.getX() - 115, diamondDashLogoLocation.getY() + 385);
         }
     }
 
-    private void searchForDiamondDashLogo() {
+    private class Location {
+        private int x, y;
+
+        public Location(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        public int getX() {
+            return x;
+        }
+
+        public int getY() {
+            return y;
+        }
+    }
+
+    private Location searchForDiamondDashLogo() {
         Rectangle screenRectangle = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-        BufferedImage screenshot = robot.createScreenCapture(screenRectangle);
+        BufferedImage diamondDashLogo = null;
         try {
-            BufferedImage diamondDashLogo = ImageIO.read(new File("diamond.dash.png"));
+            diamondDashLogo = ImageIO.read(new File("diamond.dash.bmp"));
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
+        Location logoLocation = null;
 
-        // TODO: search for logo in screenshot
+        while (true) {
+            BufferedImage screenshot = robot.createScreenCapture(screenRectangle);
+            boolean found = false;
 
-        System.out.println("DONE");
+            for (int screenX = 0; screenX < screenshot.getWidth() - diamondDashLogo.getWidth(); screenX++) {
+                for (int screenY = 0; screenY < screenshot.getHeight() - diamondDashLogo.getHeight(); screenY++) {
+                    found = true;
+
+                    for (int logoX = 0; logoX < diamondDashLogo.getWidth(); logoX++) {
+                        for (int logoY = 0; logoY < diamondDashLogo.getHeight(); logoY++) {
+                            if (screenshot.getRGB(screenX + logoX, screenY + logoY) != diamondDashLogo.getRGB(logoX, logoY)) {
+                                found = false;
+                                logoX = diamondDashLogo.getWidth();
+                                break;
+                            }
+                        }
+                    }
+
+                    if (found) {
+                        logoLocation = new Location(screenX, screenY);
+                        screenX = screenshot.getWidth();
+                        break;
+                    }
+                }
+            }
+
+            if (found) {
+                break;
+            }
+
+            try {
+                Thread.sleep(500);
+            } catch (Exception e) {}
+        }
+
+        return logoLocation;
     }
 
     public void keyReleased(KeyEvent e) {}
