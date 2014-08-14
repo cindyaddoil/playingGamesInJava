@@ -16,6 +16,9 @@ import javax.swing.SwingWorker;
 import java.util.List;
 import java.awt.event.InputEvent;
 import java.awt.Color;
+import java.util.concurrent.TimeUnit;
+import java.awt.event.WindowFocusListener;
+import java.awt.event.WindowEvent;
 
 class DiamondDashBot extends SwingWorker<Void, String> {
     private final static int GRID_ROWS = 9;
@@ -23,7 +26,7 @@ class DiamondDashBot extends SwingWorker<Void, String> {
     private final static int BRICK_WIDTH = 40;
     private final static int BRICK_HEIGHT = 40;
     private final static int SAMPLE_OFFSET = 5;
-    private final static double SENSITIVITY = 0.6;
+    private final static double SENSITIVITY = 0.7;
     private final static int COUNTER_THRESHOLD = 20;
 
     private final Robot robot;
@@ -63,7 +66,7 @@ class DiamondDashBot extends SwingWorker<Void, String> {
         Location diamondDashLogoLocation = searchForDiamondDashLogo();
 
         Location playButtonLocation = new Location(diamondDashLogoLocation.getX() - 115, diamondDashLogoLocation.getY() + 385);
-        Location topLeftBrick = new Location(diamondDashLogoLocation.getX() - 565, diamondDashLogoLocation.getY() + 147);
+        Location topLeftBrick = new Location(diamondDashLogoLocation.getX() - 569, diamondDashLogoLocation.getY() + 145);
 
         publish("Let's play!");
         mouseClick(playButtonLocation); // focus window under cursor
@@ -72,6 +75,8 @@ class DiamondDashBot extends SwingWorker<Void, String> {
         Thread.sleep(5000);
 
         while (true) {
+            if (isCancelled()) break;
+
             Rectangle gridRectangle = new Rectangle(topLeftBrick.getX() - 20, topLeftBrick.getY() - 20, BRICK_WIDTH * GRID_COLUMNS, BRICK_HEIGHT * GRID_ROWS);
             BufferedImage gridScreenshot = robot.createScreenCapture(gridRectangle);
 
@@ -86,15 +91,35 @@ class DiamondDashBot extends SwingWorker<Void, String> {
             }
 
             if (pointToClick != null) {
-                System.out.println("Clicking on row = " + pointToClick.getY() + " col = " + pointToClick.getX());
                 mouseClick(pointToClick);
             }
+
+            Thread.sleep(50);
+        }
+
+        return null;
+    }
+
+    private void printGrid() {
+        char c = 'x';
+        for (int row = 0; row < GRID_ROWS; row++) {
+            for (int col = 0; col < GRID_COLUMNS; col++) {
+                if (grid[row][col] == BrickColor.RED) c = 'r';
+                else if (grid[row][col] == BrickColor.GREEN) c = 'g';
+                else if (grid[row][col] == BrickColor.BLUE) c = 'b';
+                else if (grid[row][col] == BrickColor.YELLOW) c = 'y';
+                else if (grid[row][col] == BrickColor.PURPLE) c = 'p';
+                else if (grid[row][col] == BrickColor.GREY) c = 'x';
+                else if (grid[row][col] == BrickColor.DIAMOND) c = 'd';
+                System.out.print(c);
+            }
+            System.out.println();
         }
     }
 
     private Location positionToLocation(Location topLeftBrick, GridPosition positionToClick) {
-        return new Location(topLeftBrick.getX() - 20 + positionToClick.getCol() * BRICK_WIDTH + BRICK_WIDTH / 2,
-                            topLeftBrick.getY() - 20 + positionToClick.getRow() * BRICK_HEIGHT + BRICK_HEIGHT / 2);
+        return new Location(topLeftBrick.getX() + positionToClick.getCol() * BRICK_WIDTH,
+                            topLeftBrick.getY() + positionToClick.getRow() * BRICK_HEIGHT);
     }
 
     @Override
@@ -246,13 +271,19 @@ class DiamondDashBot extends SwingWorker<Void, String> {
     }
 
     private enum BrickColor {
-        RED,
-        GREEN,
-        BLUE,
-        YELLOW,
-        PURPLE,
-        GREY,
-        DIAMOND
+        RED(0xFF0000),
+        GREEN(0x00FF00),
+        BLUE(0x0000FF),
+        YELLOW(0xFFFF00),
+        PURPLE(0xFF00FF),
+        GREY(0),
+        DIAMOND(0);
+
+        private final int color;
+
+        BrickColor(int color) { this.color = color; }
+
+        public int getColor() { return color; }
     }
 
     private class GridPosition {
@@ -354,13 +385,21 @@ class DiamondDash extends JFrame implements KeyListener {
         getContentPane().add(botStateLabel, BorderLayout.CENTER);
 
         addKeyListener(this);
+        addWindowFocusListener(new WindowFocusListener() {
+            public void windowGainedFocus(WindowEvent e) {
+                if (diamondDashBot != null && !diamondDashBot.isDone()) {
+                    diamondDashBot.cancel(true);
+                }
+            }
+
+            public void windowLostFocus(WindowEvent e) {}
+        });
 
         setLocationRelativeTo(null);
         setVisible(true);
     }
 
     public void keyPressed(KeyEvent e) {
-        System.out.println("enter pressed");
         if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             if (diamondDashBot == null || diamondDashBot.isDone()) {
                 diamondDashBot = new DiamondDashBot(botStateLabel);
