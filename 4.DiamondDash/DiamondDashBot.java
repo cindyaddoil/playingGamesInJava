@@ -94,23 +94,6 @@ class DiamondDashBot extends SwingWorker<Void, String> {
         return null;
     }
 
-    private void printGrid() {
-        char c = 'x';
-        for (int row = 0; row < GRID_ROWS; row++) {
-            for (int col = 0; col < GRID_COLUMNS; col++) {
-                if (grid[row][col] == BrickColor.RED) c = 'r';
-                else if (grid[row][col] == BrickColor.GREEN) c = 'g';
-                else if (grid[row][col] == BrickColor.BLUE) c = 'b';
-                else if (grid[row][col] == BrickColor.YELLOW) c = 'y';
-                else if (grid[row][col] == BrickColor.PURPLE) c = 'p';
-                else if (grid[row][col] == BrickColor.GREY) c = 'x';
-                else if (grid[row][col] == BrickColor.DIAMOND) c = 'd';
-                System.out.print(c);
-            }
-            System.out.println();
-        }
-    }
-
     private Location positionToLocation(Location topLeftBrick, GridPosition positionToClick) {
         return new Location(topLeftBrick.getX() + positionToClick.getCol() * BRICK_WIDTH,
                             topLeftBrick.getY() + positionToClick.getRow() * BRICK_HEIGHT);
