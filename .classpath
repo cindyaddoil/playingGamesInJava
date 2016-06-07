@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="1.Boggle"/>
+	<classpathentry kind="src" path="2.N-Puzzle"/>
+	<classpathentry kind="src" path="3.Connect4"/>
+	<classpathentry kind="src" path="4.DiamondDash"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
